@@ -58,7 +58,7 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('bird', 'bird.png');
+    this.load.image('bird', 'bird_red.png');
     this.load.image('bgSky', 'background_sky.png');
     this.load.image('bgGround', 'background_ground.png');
   }
