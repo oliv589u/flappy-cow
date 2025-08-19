@@ -81,11 +81,29 @@ class GameScene extends Phaser.Scene {
     this.load.image('bird', 'bird.png');       // default bird
     this.load.image('birdRed', 'bird_red.png'); 
     this.load.image('birdBlue', 'bird_blue.png');
+
+    // Load background images for scrolling background
+    this.load.image('bgSky', 'background_sky.png');
+    this.load.image('bgGround', 'background_ground.png');
   }
 
   create() {
     gameOver = false;
     score = 0;
+
+    // Create two copies of the sky background for seamless scrolling
+    this.bgSky1 = this.add.image(0, 0, 'bgSky').setOrigin(0, 0);
+    this.bgSky2 = this.add.image(this.bgSky1.width, 0, 'bgSky').setOrigin(0, 0);
+
+    // Create two copies of the ground background for scrolling
+    this.bgGround1 = this.add.image(0, 550, 'bgGround').setOrigin(0, 0);
+    this.bgGround2 = this.add.image(this.bgGround1.width, 550, 'bgGround').setOrigin(0, 0);
+
+    // Set background depths so they appear behind bird and pipes
+    this.bgSky1.setDepth(-10);
+    this.bgSky2.setDepth(-10);
+    this.bgGround1.setDepth(-5);
+    this.bgGround2.setDepth(-5);
 
     // Generate pipe texture programmatically
     const graphics = this.add.graphics();
@@ -121,9 +139,31 @@ class GameScene extends Phaser.Scene {
   update() {
     if (gameOver) return;
 
-    // Removed rotation animation so bird stays upright
-    // bird.angle = Phaser.Math.Clamp(bird.body.velocity.y / 5, -30, 90);
+    // Scroll background layers with different speeds for parallax effect
+    const skySpeed = 1;
+    const groundSpeed = 3;
 
+    // Move sky backgrounds left
+    this.bgSky1.x -= skySpeed;
+    this.bgSky2.x -= skySpeed;
+    if (this.bgSky1.x <= -this.bgSky1.width) {
+      this.bgSky1.x = this.bgSky2.x + this.bgSky2.width;
+    }
+    if (this.bgSky2.x <= -this.bgSky2.width) {
+      this.bgSky2.x = this.bgSky1.x + this.bgSky1.width;
+    }
+
+    // Move ground backgrounds left
+    this.bgGround1.x -= groundSpeed;
+    this.bgGround2.x -= groundSpeed;
+    if (this.bgGround1.x <= -this.bgGround1.width) {
+      this.bgGround1.x = this.bgGround2.x + this.bgGround2.width;
+    }
+    if (this.bgGround2.x <= -this.bgGround2.width) {
+      this.bgGround2.x = this.bgGround1.x + this.bgGround1.width;
+    }
+
+    // Bird falls below bottom boundary
     if (bird.y > 600) {
       this.endGame();
     }
