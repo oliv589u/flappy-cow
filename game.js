@@ -28,25 +28,23 @@ let gameOver = false;
 const game = new Phaser.Game(config);
 
 function preload() {
-  // Load your bird image here:
+  console.log('preload running');
   this.load.image('bird', 'bird.png');
-
-  // Generate pipe texture programmatically
-  this.graphics = this.add.graphics();
-
-  this.graphics.fillStyle(0x008000, 1);
-  this.graphics.fillRect(0, 0, 60, 400);
-  this.graphics.generateTexture('pipe', 60, 400);
-  this.graphics.destroy();
 }
 
 function create() {
+  console.log('create running');
+
+  // Generate pipe texture programmatically
+  const graphics = this.add.graphics();
+  graphics.fillStyle(0x008000, 1);
+  graphics.fillRect(0, 0, 60, 400);
+  graphics.generateTexture('pipe', 60, 400);
+  graphics.destroy();
+
   bird = this.physics.add.sprite(50, 300, 'bird');
   bird.setOrigin(0, 0);
-
-  // Adjust hitbox size if your bird image size is different
   bird.body.setSize(bird.width, bird.height);
-
   bird.setCollideWorldBounds(true);
 
   pipes = this.physics.add.group();
@@ -65,7 +63,6 @@ function create() {
 
   this.physics.add.overlap(bird, pipes, hitPipe, null, this);
 
-  // Reset game state
   gameOver = false;
   score = 0;
 }
