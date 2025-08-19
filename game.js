@@ -172,11 +172,12 @@ class GameScene extends Phaser.Scene {
       this.bgGround2.x = this.bgGround1.x + this.bgGround1.displayWidth;
     }
 
-    // Your existing update logic for bird & pipes
+    // Bird falls off screen
     if (bird.y > 600) {
       this.endGame();
     }
 
+    // Pipe scoring and cleanup
     pipes.getChildren().forEach(pipe => {
       if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x && pipe.y === 0) {
         score++;
@@ -243,3 +244,38 @@ class GameScene extends Phaser.Scene {
     });
   }
 }
+
+// Placeholder for customization scene (so button won't crash)
+class CustomizationScene extends Phaser.Scene {
+  constructor() {
+    super('CustomizationScene');
+  }
+  create() {
+    this.add.text(50, 50, 'Customization Scene Placeholder', { fontSize: '24px', fill: '#000' });
+    this.input.once('pointerdown', () => {
+      this.scene.start('MainMenuScene');
+    });
+  }
+}
+
+// Global vars & Phaser config
+let gameOver = false;
+let score = 0;
+let bird;
+let pipes;
+let scoreText;
+let pipeTimer;
+
+const config = {
+  type: Phaser.AUTO,
+  width: 400,
+  height: 600,
+  parent: 'game-container',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 1000 }, debug: false }
+  },
+  scene: [MainMenuScene, GameScene, CustomizationScene]
+};
+
+new Phaser.Game(config);
