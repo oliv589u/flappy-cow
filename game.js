@@ -58,7 +58,6 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // Provide fallback or placeholder images or use data URIs
     this.load.image('bird', 'bird.png');
     this.load.image('bgSky', 'background_sky.png');
     this.load.image('bgGround', 'background_ground.png');
@@ -68,12 +67,17 @@ class GameScene extends Phaser.Scene {
     gameOver = false;
     score = 0;
 
+    // Background layers
     this.bgSky1 = this.add.image(0, 0, 'bgSky').setOrigin(0);
     this.bgSky2 = this.add.image(this.bgSky1.width, 0, 'bgSky').setOrigin(0);
 
     this.bgGround1 = this.add.image(0, 550, 'bgGround').setOrigin(0);
     this.bgGround2 = this.add.image(this.bgGround1.width, 550, 'bgGround').setOrigin(0);
 
+    // Add score text FIRST so it's behind pipes
+    scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+    // Pipe graphics
     const graphics = this.add.graphics();
     graphics.fillStyle(0x008000, 1);
     graphics.fillRect(0, 0, 60, 400);
@@ -85,8 +89,6 @@ class GameScene extends Phaser.Scene {
     bird.setCollideWorldBounds(true);
 
     pipes = this.physics.add.group();
-
-    scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
     pipeTimer = this.time.addEvent({
       delay: 1500,
@@ -104,6 +106,7 @@ class GameScene extends Phaser.Scene {
   update() {
     if (gameOver) return;
 
+    // Sky scrolling
     const scrollSpeed = 1;
     this.bgSky1.x -= scrollSpeed;
     this.bgSky2.x -= scrollSpeed;
@@ -115,6 +118,7 @@ class GameScene extends Phaser.Scene {
       this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
     }
 
+    // Ground scrolling
     const groundScrollSpeed = 3;
     this.bgGround1.x -= groundScrollSpeed;
     this.bgGround2.x -= groundScrollSpeed;
@@ -126,10 +130,12 @@ class GameScene extends Phaser.Scene {
       this.bgGround2.x = this.bgGround1.x + this.bgGround1.displayWidth;
     }
 
-    if (bird.y > 600) {
+    // Bird out of bounds
+    if (bird.y > this.scale.height) {
       this.endGame();
     }
 
+    // Pipe logic
     pipes.getChildren().forEach(pipe => {
       if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x && pipe.y === 0) {
         score++;
@@ -151,18 +157,18 @@ class GameScene extends Phaser.Scene {
   addPipes() {
     const gap = 150;
     const minHeight = 50;
-    const maxHeight = 600 - gap - 50;
+    const maxHeight = this.scale.height - gap - 50;
     const pipeHeight = Phaser.Math.Between(minHeight, maxHeight);
 
-    const topPipe = pipes.create(400, 0, 'pipe').setOrigin(0, 0);
+    const topPipe = pipes.create(this.scale.width, 0, 'pipe').setOrigin(0, 0);
     topPipe.setDisplaySize(60, pipeHeight);
     topPipe.body.setAllowGravity(false);
     topPipe.setImmovable(true);
     topPipe.setVelocityX(-200);
     topPipe.scored = false;
 
-    const bottomPipe = pipes.create(400, pipeHeight + gap, 'pipe').setOrigin(0, 0);
-    bottomPipe.setDisplaySize(60, 600 - (pipeHeight + gap));
+    const bottomPipe = pipes.create(this.scale.width, pipeHeight + gap, 'pipe').setOrigin(0, 0);
+    bottomPipe.setDisplaySize(60, this.scale.height - (pipeHeight + gap));
     bottomPipe.body.setAllowGravity(false);
     bottomPipe.setImmovable(true);
     bottomPipe.setVelocityX(-200);
@@ -180,7 +186,6 @@ class GameScene extends Phaser.Scene {
     scoreText.setText('Game Over! Final Score: ' + score + '\nPress Space or Click to Restart');
 
     pipes.getChildren().forEach(pipe => pipe.setVelocityX(0));
-
     this.physics.pause();
 
     this.input.keyboard.once('keydown-SPACE', () => this.scene.restart());
@@ -188,12 +193,12 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// Phaser Game configuration and initialization
-
 const config = {
   type: Phaser.AUTO,
-  width: 400,
-  height: 600,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   physics: {
     default: 'arcade',
     arcade: {
