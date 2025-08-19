@@ -15,10 +15,17 @@ class MainMenuScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.text(100, 100, 'Flappy Game', { fontSize: '40px', fill: '#000' });
+    const centerX = this.cameras.main.width / 2;
 
-    const playText = this.add.text(150, 250, '▶ Play', { fontSize: '32px', fill: '#00f' }).setInteractive();
-    const customizeText = this.add.text(120, 320, '🎨 Customize', { fontSize: '32px', fill: '#00f' }).setInteractive();
+    this.add.text(centerX, 100, 'Flappy Game', { fontSize: '40px', fill: '#000' }).setOrigin(0.5);
+
+    const playText = this.add.text(centerX, 250, '▶ Play', { fontSize: '32px', fill: '#00f' })
+      .setOrigin(0.5)
+      .setInteractive();
+
+    const customizeText = this.add.text(centerX, 320, '🎨 Customize', { fontSize: '32px', fill: '#00f' })
+      .setOrigin(0.5)
+      .setInteractive();
 
     playText.on('pointerdown', () => {
       this.scene.start('GameScene');
@@ -114,8 +121,8 @@ class GameScene extends Phaser.Scene {
   update() {
     if (gameOver) return;
 
-    // Bird rotation for nicer effect
-    bird.angle = Phaser.Math.Clamp(bird.body.velocity.y / 5, -30, 90);
+    // Removed rotation animation so bird stays upright
+    // bird.angle = Phaser.Math.Clamp(bird.body.velocity.y / 5, -30, 90);
 
     if (bird.y > 600) {
       this.endGame();
