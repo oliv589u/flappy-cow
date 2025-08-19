@@ -30,6 +30,7 @@ const game = new Phaser.Game(config);
 function preload() {
   // Load your bird image here:
   this.load.image('bird', 'bird.png');
+  bird.setScale(0.1); // scales the 400x600 image down to roughly 40x60
 
   // Generate pipe texture programmatically
   this.graphics = this.add.graphics();
