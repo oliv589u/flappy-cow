@@ -6,7 +6,7 @@ class MainMenuScene extends Phaser.Scene {
   create() {
     const centerX = this.cameras.main.width / 2;
 
-    // Sky background only
+    // Solid color background in case sky doesn't fill
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
 
     const titleStyle = {
@@ -32,10 +32,16 @@ class MainMenuScene extends Phaser.Scene {
     const playText = this.add.text(centerX, 250, '▶ Play', btnStyle)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-
     playText.on('pointerover', () => playText.setStyle({ backgroundColor: '#218838' }));
     playText.on('pointerout', () => playText.setStyle({ backgroundColor: '#28a745' }));
     playText.on('pointerdown', () => this.scene.start('GameScene'));
+
+    const customizeText = this.add.text(centerX, 320, '🎨 Customize', btnStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    customizeText.on('pointerover', () => customizeText.setStyle({ backgroundColor: '#0069d9' }));
+    customizeText.on('pointerout', () => customizeText.setStyle({ backgroundColor: '#28a745' }));
+    customizeText.on('pointerdown', () => this.scene.start('CustomizationScene'));
   }
 }
 
@@ -55,17 +61,18 @@ class GameScene extends Phaser.Scene {
     gameOver = false;
     score = 0;
 
-    // Sky background only
+    // Solid blue fill behind sky
+    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
+
+    // Add sky images, scaled to cover full screen
     this.bgSky1 = this.add.image(0, 0, 'bgSky').setOrigin(0, 0);
     this.bgSky2 = this.add.image(this.bgSky1.width, 0, 'bgSky').setOrigin(0, 0);
 
-    if (this.bgSky1.width > this.cameras.main.width) {
-      const scaleX = this.cameras.main.width / this.bgSky1.width;
-      const scaleY = this.cameras.main.height / this.bgSky1.height;
-      const scale = Math.min(scaleX, scaleY);
-      this.bgSky1.setScale(scale);
-      this.bgSky2.setScale(scale);
-    }
+    const scaleX = this.cameras.main.width / this.bgSky1.width;
+    const scaleY = this.cameras.main.height / this.bgSky1.height;
+    const scale = Math.max(scaleX, scaleY); // make sure it fills vertically and horizontally
+    this.bgSky1.setScale(scale);
+    this.bgSky2.setScale(scale);
     this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
 
     // Generate pipe texture programmatically
@@ -175,7 +182,6 @@ class GameScene extends Phaser.Scene {
     this.physics.pause();
     pipeTimer.remove();
 
-    // Overlay
     const overlay = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5).setOrigin(0, 0);
     overlay.setDepth(99);
 
@@ -189,7 +195,6 @@ class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
     gameOverText.setDepth(100);
 
-    // Buttons
     const btnStyle = {
       fontSize: '32px',
       fill: '#fff',
@@ -205,9 +210,7 @@ class GameScene extends Phaser.Scene {
       .setDepth(100);
     continueBtn.on('pointerover', () => continueBtn.setStyle({ backgroundColor: '#218838' }));
     continueBtn.on('pointerout', () => continueBtn.setStyle({ backgroundColor: '#28a745' }));
-    continueBtn.on('pointerdown', () => {
-      this.scene.restart();
-    });
+    continueBtn.on('pointerdown', () => this.scene.restart());
 
     const menuBtn = this.add.text(200, 420, 'Main Menu', btnStyle)
       .setOrigin(0.5)
@@ -215,9 +218,27 @@ class GameScene extends Phaser.Scene {
       .setDepth(100);
     menuBtn.on('pointerover', () => menuBtn.setStyle({ backgroundColor: '#218838' }));
     menuBtn.on('pointerout', () => menuBtn.setStyle({ backgroundColor: '#28a745' }));
-    menuBtn.on('pointerdown', () => {
-      this.scene.start('MainMenuScene');
-    });
+    menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+  }
+}
+
+class CustomizationScene extends Phaser.Scene {
+  constructor() {
+    super('CustomizationScene');
+  }
+  create() {
+    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
+    this.add.text(200, 100, 'Customization Placeholder', {
+      fontSize: '28px',
+      fill: '#000'
+    }).setOrigin(0.5);
+
+    this.add.text(200, 500, 'Click anywhere to return', {
+      fontSize: '20px',
+      fill: '#000'
+    }).setOrigin(0.5);
+
+    this.input.once('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
 
@@ -238,7 +259,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 1000 }, debug: false }
   },
-  scene: [MainMenuScene, GameScene]
+  scene: [MainMenuScene, GameScene, CustomizationScene]
 };
 
 new Phaser.Game(config);
