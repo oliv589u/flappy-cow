@@ -89,7 +89,7 @@ function update() {
 
 function flap() {
   if (gameOver) return;
-  bird.setVelocityY(-100);
+  bird.setVelocityY(-400);
 }
 
 function addPipes() {
