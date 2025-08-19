@@ -44,7 +44,7 @@ function create() {
 
   bird = this.physics.add.sprite(50, 300, 'bird');
   bird.setOrigin(0, 0);
-  bird.body.setSize(60, 40);
+  bird.body.setSize(bird.width, bird.height);
   bird.setCollideWorldBounds(true);
 
   pipes = this.physics.add.group();
