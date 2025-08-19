@@ -1,74 +1,63 @@
-let bird;
-let pipes;
-let pipeTimer;
-let score = 0;
-let scoreText;
-let gameOver = false;
-
 class MainMenuScene extends Phaser.Scene {
   constructor() {
     super('MainMenuScene');
   }
 
   preload() {
-    // No assets needed here, you can add button images if you want
+    // Optionally load button or background images here
   }
 
   create() {
     const centerX = this.cameras.main.width / 2;
 
-    this.add.text(centerX, 100, 'Flappy Game', { fontSize: '40px', fill: '#000' }).setOrigin(0.5);
+    // Add colorful background rectangle
+    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0); // light sky blue
 
-    const playText = this.add.text(centerX, 250, '▶ Play', { fontSize: '32px', fill: '#00f' })
-      .setOrigin(0.5)
-      .setInteractive();
+    // Title with gradient text style
+    const titleStyle = {
+      fontSize: '48px',
+      fontWeight: 'bold',
+      fill: '#fff',
+      stroke: '#000',
+      strokeThickness: 4,
+      shadow: { offsetX: 2, offsetY: 2, color: '#333', blur: 3, stroke: true, fill: true }
+    };
 
-    const customizeText = this.add.text(centerX, 320, '🎨 Customize', { fontSize: '32px', fill: '#00f' })
+    this.add.text(centerX, 100, 'Flappy Game', titleStyle).setOrigin(0.5);
+
+    // Play button style
+    const btnStyle = {
+      fontSize: '36px',
+      fill: '#fff',
+      backgroundColor: '#28a745',
+      padding: { x: 20, y: 10 },
+      stroke: '#155724',
+      strokeThickness: 3,
+      shadow: { offsetX: 1, offsetY: 1, color: '#155724', blur: 2, stroke: true, fill: true }
+    };
+
+    const playText = this.add.text(centerX, 250, '▶ Play', btnStyle)
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive({ useHandCursor: true });
+
+    playText.on('pointerover', () => playText.setStyle({ backgroundColor: '#218838' }));
+    playText.on('pointerout', () => playText.setStyle({ backgroundColor: '#28a745' }));
 
     playText.on('pointerdown', () => {
       this.scene.start('GameScene');
     });
 
+    // Customize button style
+    const customizeText = this.add.text(centerX, 320, '🎨 Customize', btnStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    customizeText.on('pointerover', () => customizeText.setStyle({ backgroundColor: '#0069d9' }));
+    customizeText.on('pointerout', () => customizeText.setStyle({ backgroundColor: '#28a745' }));
+
     customizeText.on('pointerdown', () => {
       this.scene.start('CustomizationScene');
     });
-  }
-}
-
-class CustomizationScene extends Phaser.Scene {
-  constructor() {
-    super('CustomizationScene');
-  }
-
-  preload() {
-    this.load.image('birdRed', 'bird_red.png');
-    this.load.image('birdBlue', 'bird_blue.png');
-  }
-
-  create() {
-    this.add.text(70, 50, 'Choose Your Bird', { fontSize: '32px', fill: '#000' });
-
-    const redBird = this.add.image(120, 200, 'birdRed').setInteractive();
-    const blueBird = this.add.image(280, 200, 'birdBlue').setInteractive();
-
-    let selectionText = this.add.text(100, 350, '', { fontSize: '20px', fill: '#f00' });
-
-    redBird.on('pointerdown', () => {
-      this.registry.set('birdSkin', 'birdRed');
-      selectionText.setText('Selected Red');
-    });
-
-    blueBird.on('pointerdown', () => {
-      this.registry.set('birdSkin', 'birdBlue');
-      selectionText.setText('Selected Blue');
-      selectionText.setFill('#00f');
-    });
-
-    this.add.text(150, 500, '🔙 Back', { fontSize: '24px', fill: '#00f' })
-      .setInteractive()
-      .on('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
 
@@ -81,25 +70,43 @@ class GameScene extends Phaser.Scene {
     this.load.image('bird', 'bird.png');       // default bird
     this.load.image('birdRed', 'bird_red.png'); 
     this.load.image('birdBlue', 'bird_blue.png');
-
-    // Load background images for scrolling background
-    this.load.image('bgSky', 'background_sky.png');
-    this.load.image('bgGround', 'background_ground.png');
+    this.load.image('bgSky', 'background_sky.png');     // add your sky image here
+    this.load.image('bgGround', 'background_ground.png'); // ground image
   }
 
   create() {
     gameOver = false;
     score = 0;
 
-    // Create two copies of the sky background for seamless scrolling
+    // Create sky backgrounds with adjusted size
     this.bgSky1 = this.add.image(0, 0, 'bgSky').setOrigin(0, 0);
     this.bgSky2 = this.add.image(this.bgSky1.width, 0, 'bgSky').setOrigin(0, 0);
 
-    // Create two copies of the ground background for scrolling
+    // Resize bgSky if too big for canvas (assume original might be bigger)
+    if (this.bgSky1.width > this.cameras.main.width) {
+      const scaleX = this.cameras.main.width / this.bgSky1.width;
+      const scaleY = this.cameras.main.height / this.bgSky1.height;
+      const scale = Math.min(scaleX, scaleY);
+      this.bgSky1.setScale(scale);
+      this.bgSky2.setScale(scale);
+    }
+
+    // Adjust position of bgSky2 after scaling
+    this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
+
+    // Ground backgrounds at bottom (y=550), scaled if needed
     this.bgGround1 = this.add.image(0, 550, 'bgGround').setOrigin(0, 0);
     this.bgGround2 = this.add.image(this.bgGround1.width, 550, 'bgGround').setOrigin(0, 0);
 
-    // Set background depths so they appear behind bird and pipes
+    // If ground image wider than game width, scale to fit
+    if (this.bgGround1.width > this.cameras.main.width) {
+      const scale = this.cameras.main.width / this.bgGround1.width;
+      this.bgGround1.setScale(scale);
+      this.bgGround2.setScale(scale);
+      this.bgGround2.x = this.bgGround1.x + this.bgGround1.displayWidth;
+    }
+
+    // Set depth behind bird and pipes
     this.bgSky1.setDepth(-10);
     this.bgSky2.setDepth(-10);
     this.bgGround1.setDepth(-5);
@@ -139,31 +146,33 @@ class GameScene extends Phaser.Scene {
   update() {
     if (gameOver) return;
 
-    // Scroll background layers with different speeds for parallax effect
-    const skySpeed = 1;
-    const groundSpeed = 3;
+    const scrollSpeed = 1;
 
-    // Move sky backgrounds left
-    this.bgSky1.x -= skySpeed;
-    this.bgSky2.x -= skySpeed;
-    if (this.bgSky1.x <= -this.bgSky1.width) {
-      this.bgSky1.x = this.bgSky2.x + this.bgSky2.width;
-    }
-    if (this.bgSky2.x <= -this.bgSky2.width) {
-      this.bgSky2.x = this.bgSky1.x + this.bgSky1.width;
-    }
+    // Scroll sky backgrounds left
+    this.bgSky1.x -= scrollSpeed;
+    this.bgSky2.x -= scrollSpeed;
 
-    // Move ground backgrounds left
-    this.bgGround1.x -= groundSpeed;
-    this.bgGround2.x -= groundSpeed;
-    if (this.bgGround1.x <= -this.bgGround1.width) {
-      this.bgGround1.x = this.bgGround2.x + this.bgGround2.width;
+    // Reset for infinite loop
+    if (this.bgSky1.x <= -this.bgSky1.displayWidth) {
+      this.bgSky1.x = this.bgSky2.x + this.bgSky2.displayWidth;
     }
-    if (this.bgGround2.x <= -this.bgGround2.width) {
-      this.bgGround2.x = this.bgGround1.x + this.bgGround1.width;
+    if (this.bgSky2.x <= -this.bgSky2.displayWidth) {
+      this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
     }
 
-    // Bird falls below bottom boundary
+    // Scroll ground faster for parallax
+    const groundScrollSpeed = 3;
+    this.bgGround1.x -= groundScrollSpeed;
+    this.bgGround2.x -= groundScrollSpeed;
+
+    if (this.bgGround1.x <= -this.bgGround1.displayWidth) {
+      this.bgGround1.x = this.bgGround2.x + this.bgGround2.displayWidth;
+    }
+    if (this.bgGround2.x <= -this.bgGround2.displayWidth) {
+      this.bgGround2.x = this.bgGround1.x + this.bgGround1.displayWidth;
+    }
+
+    // Your existing update logic for bird & pipes
     if (bird.y > 600) {
       this.endGame();
     }
@@ -234,21 +243,3 @@ class GameScene extends Phaser.Scene {
     });
   }
 }
-
-const config = {
-  type: Phaser.AUTO,
-  width: 400,
-  height: 600,
-  parent: 'game-container',
-  backgroundColor: '#fff',
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 1000 },
-      debug: false
-    }
-  },
-  scene: [MainMenuScene, CustomizationScene, GameScene]
-};
-
-const game = new Phaser.Game(config);
