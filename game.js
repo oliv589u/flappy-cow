@@ -65,6 +65,9 @@ function create() {
 
   gameOver = false;
   score = 0;
+
+  // Reset bird rotation on restart
+  bird.setAngle(0);
 }
 
 function update() {
@@ -75,21 +78,32 @@ function update() {
   }
 
   pipes.getChildren().forEach(pipe => {
-    if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x) {
-      score += 0.5; // Each pipe counts for 0.5, pair adds to 1
-      scoreText.setText('Score: ' + Math.floor(score));
+    // Only count score once per pipe pair (top pipes have originY=0)
+    if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x && pipe.originY === 0) {
+      score++;
+      scoreText.setText('Score: ' + score);
       pipe.scored = true;
+
+      // Mark the bottom pipe in the pair as scored too to avoid double counting
+      const bottomPipe = pipes.getChildren().find(p => p.x === pipe.x && p.originY !== 0);
+      if (bottomPipe) bottomPipe.scored = true;
     }
 
     if (pipe.x < -pipe.displayWidth) {
       pipe.destroy();
     }
   });
+
+  // Rotate bird slowly downwards (max 20 degrees)
+  if (bird.angle < 20) {
+    bird.setAngle(bird.angle + 1);
+  }
 }
 
 function flap() {
   if (gameOver) return;
   bird.setVelocityY(-500);
+  bird.setAngle(-20);
 }
 
 function addPipes() {
@@ -117,25 +131,3 @@ function addPipes() {
 
 function hitPipe() {
   if (!gameOver) {
-    endGame.call(this);
-  }
-}
-
-function endGame() {
-  gameOver = true;
-  scoreText.setText('Game Over! Final Score: ' + Math.floor(score) + '\nPress Space or Click to Restart');
-
-  pipes.getChildren().forEach(pipe => {
-    pipe.setVelocityX(0);
-  });
-
-  this.physics.pause();
-
-  this.input.keyboard.once('keydown-SPACE', () => {
-    this.scene.restart();
-  });
-
-  this.input.once('pointerdown', () => {
-    this.scene.restart();
-  });
-}
