@@ -58,7 +58,7 @@ function create() {
     loop: true
   });
 
-  this.input.keyboard.on('keydown-SPACE', flap, this);
+  this.input.keyboard.on('keydown-W', flap, this);
   this.input.on('pointerdown', flap, this);
 
   this.physics.add.overlap(bird, pipes, hitPipe, null, this);
