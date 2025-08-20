@@ -68,7 +68,7 @@ class GameScene extends Phaser.Scene {
     g.generateTexture('pipe', 60, 400);
     g.destroy();
 
-    const selectedSkin = this.registry.get('birdSkin') || 'birdblue';
+    const selectedSkin = this.registry.get('birdSkin') || 'bird';
     bird = this.physics.add.sprite(50, 300, selectedSkin);
     bird.setOrigin(0, 0);
 
@@ -196,7 +196,7 @@ class CustomizationScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const skins = ['birdRed', 'birdBlue'];
-    const selectedSkin = this.registry.get('birdSkin') || 'bird';
+    const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     const spacing = 120;
 
     skins.forEach((skin, index) => {
