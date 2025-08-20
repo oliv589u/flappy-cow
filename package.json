@@ -1,0 +1,16 @@
+{
+  "name": "flappy-cow",
+  "version": "1.0.0",
+  "description": "flappy bird with more features",
+  "main": "game.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}

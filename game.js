@@ -1,6 +1,5 @@
 /* global Phaser */
 
-// Simple per-skin hitbox configs
 const HITBOXES = {
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
   birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 }
@@ -10,7 +9,6 @@ class MainMenuScene extends Phaser.Scene {
   constructor() { super('MainMenuScene'); }
 
   create() {
-    // ✅ Set default skin if not selected
     if (!this.registry.get('birdSkin')) {
       this.registry.set('birdSkin', 'birdBlue');
     }
@@ -39,6 +37,11 @@ class MainMenuScene extends Phaser.Scene {
     customizeText.on('pointerover', () => customizeText.setStyle({ backgroundColor: '#0069d9' }));
     customizeText.on('pointerout',  () => customizeText.setStyle({ backgroundColor: '#28a745' }));
     customizeText.on('pointerdown', () => this.scene.start('CustomizationScene'));
+
+    const leaderboardText = this.add.text(cx, 390, '🏆 Leaderboard', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    leaderboardText.on('pointerover', () => leaderboardText.setStyle({ backgroundColor: '#ffc107' }));
+    leaderboardText.on('pointerout', () => leaderboardText.setStyle({ backgroundColor: '#28a745' }));
+    leaderboardText.on('pointerdown', () => this.scene.start('LeaderboardScene'));
   }
 }
 
@@ -73,7 +76,6 @@ class GameScene extends Phaser.Scene {
     g.generateTexture('pipe', 60, 400);
     g.destroy();
 
-    // ✅ Use a safe default skin
     const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     bird = this.physics.add.sprite(50, 300, selectedSkin);
     bird.setOrigin(0, 0);
@@ -160,15 +162,28 @@ class GameScene extends Phaser.Scene {
     if (!gameOver) this.endGame();
   }
 
-  endGame() {
+  async endGame() {
     gameOver = true;
     this.physics.pause();
     pipeTimer.remove();
 
+    let playerName = prompt("Enter your name:", "Player");
+    if (!playerName) playerName = "Player";
+
+    try {
+      await fetch('https://flappy-leaderboard-backend.onrender.com/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playerName, score })
+      });
+    } catch (err) {
+      console.warn('Failed to submit score', err);
+    }
+
     const overlay = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5).setOrigin(0, 0);
     overlay.setDepth(99);
 
-    const gameOverText = this.add.text(200, 200, 'Game Over!\nScore: ' + score, {
+    const gameOverText = this.add.text(this.cameras.main.width / 2, 200, 'Game Over!\nScore: ' + score, {
       fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6, align: 'center'
     }).setOrigin(0.5).setDepth(100);
 
@@ -177,101 +192,109 @@ class GameScene extends Phaser.Scene {
       stroke: '#155724', strokeThickness: 4
     };
 
-    const continueBtn = this.add.text(200, 350, 'Continue', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
+    const continueBtn = this.add.text(this.cameras.main.width / 2, 350, 'Continue', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
     continueBtn.on('pointerover', () => continueBtn.setStyle({ backgroundColor: '#218838' }));
     continueBtn.on('pointerout',  () => continueBtn.setStyle({ backgroundColor: '#28a745' }));
-    continueBtn.on('pointerdown', () => this.scene.restart());
+    continueBtn.on('pointerdown', () => {
+      this.scene.start('MainMenuScene');
+    });
 
-    const menuBtn = this.add.text(200, 420, 'Main Menu', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
-    menuBtn.on('pointerover', () => menuBtn.setStyle({ backgroundColor: '#218838' }));
-    menuBtn.on('pointerout',  () => menuBtn.setStyle({ backgroundColor: '#28a745' }));
-    menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+    const leaderboardBtn = this.add.text(this.cameras.main.width / 2, 420, 'View Leaderboard', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
+    leaderboardBtn.on('pointerover', () => leaderboardBtn.setStyle({ backgroundColor: '#ffc107', fill: '#000' }));
+    leaderboardBtn.on('pointerout',  () => leaderboardBtn.setStyle({ backgroundColor: '#28a745', fill: '#fff' }));
+    leaderboardBtn.on('pointerdown', () => {
+      this.scene.start('LeaderboardScene');
+    });
   }
 }
 
 class CustomizationScene extends Phaser.Scene {
   constructor() { super('CustomizationScene'); }
 
-  preload() {
-    this.load.image('birdRed', 'bird_red.png');
-    this.load.image('birdBlue', 'bird_blue.png');
-  }
-
   create() {
-    // ✅ Default skin fallback
-    if (!this.registry.get('birdSkin')) {
-      this.registry.set('birdSkin', 'birdBlue');
-    }
-
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
-    this.add.text(200, 50, 'Choose Your Bird', {
-      fontSize: '32px', fill: '#000'
+
+    this.add.text(this.cameras.main.width / 2, 80, 'Customize Your Bird', {
+      fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5);
 
-    const skins = ['birdRed', 'birdBlue'];
-    const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
-    const spacing = 120;
+    const skins = ['birdBlue', 'birdRed'];
+    const cx = this.cameras.main.width / 2;
 
-    skins.forEach((skin, index) => {
-      const x = 80 + index * spacing;
-      const sprite = this.add.image(x, 200, skin).setScale(2).setInteractive({ useHandCursor: true });
-
-      if (skin === selectedSkin) {
-        sprite.selectedBorder = this.add.rectangle(x, 200, sprite.width * 2 + 10, sprite.height * 2 + 10)
-          .setStrokeStyle(4, 0xffff00)
-          .setOrigin(0.5);
-      }
-
-      sprite.on('pointerdown', () => {
-        this.children.list.forEach(child => {
-          if (child.selectedBorder) child.selectedBorder.destroy();
-        });
-
-        sprite.selectedBorder = this.add.rectangle(x, 200, sprite.width * 2 + 10, sprite.height * 2 + 10)
-          .setStrokeStyle(4, 0xffff00)
-          .setOrigin(0.5);
-
+    skins.forEach((skin, i) => {
+      const img = this.add.image(cx - 100 + i * 200, 300, skin).setScale(2).setInteractive({ useHandCursor: true });
+      img.on('pointerdown', () => {
         this.registry.set('birdSkin', skin);
+        alert(`Selected skin: ${skin}`);
       });
     });
 
-    const backBtn = this.add.text(200, 500, '← Back to Menu', {
-      fontSize: '24px',
-      fill: '#fff',
-      backgroundColor: '#007bff',
-      padding: { x: 20, y: 10 },
-      stroke: '#0056b3',
-      strokeThickness: 3
+    const backText = this.add.text(cx, 500, '⬅ Back to Menu', {
+      fontSize: '36px', fill: '#fff', backgroundColor: '#28a745',
+      padding: { x: 20, y: 10 }, stroke: '#155724', strokeThickness: 4
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    backBtn.on('pointerover', () => backBtn.setStyle({ backgroundColor: '#0056b3' }));
-    backBtn.on('pointerout', () => backBtn.setStyle({ backgroundColor: '#007bff' }));
-    backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+    backText.on('pointerdown', () => this.scene.start('MainMenuScene'));
+    backText.on('pointerover', () => backText.setStyle({ backgroundColor: '#218838' }));
+    backText.on('pointerout', () => backText.setStyle({ backgroundColor: '#28a745' }));
   }
 }
 
-// Globals
-let gameOver = false;
-let score = 0;
-let bird;
-let pipes;
-let scoreText;
-let pipeTimer;
+class LeaderboardScene extends Phaser.Scene {
+  constructor() { super('LeaderboardScene'); }
 
-// Game Config
+  async create() {
+    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
+
+    this.add.text(this.cameras.main.width / 2, 60, 'Leaderboard', {
+      fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6
+    }).setOrigin(0.5);
+
+    const cx = this.cameras.main.width / 2;
+
+    try {
+      const response = await fetch('https://flappy-leaderboard-backend.onrender.com/scores');
+      const scores = await response.json();
+
+      scores.sort((a, b) => b.score - a.score);
+      const topScores = scores.slice(0, 10);
+
+      topScores.forEach((entry, i) => {
+        this.add.text(cx, 140 + i * 40, `${i + 1}. ${entry.name} - ${entry.score}`, {
+          fontSize: '32px', fill: '#fff', stroke: '#000', strokeThickness: 3
+        }).setOrigin(0.5);
+      });
+    } catch (err) {
+      this.add.text(cx, 140, 'Failed to load leaderboard', {
+        fontSize: '32px', fill: '#f00'
+      }).setOrigin(0.5);
+    }
+
+    const backText = this.add.text(cx, 550, '⬅ Back to Menu', {
+      fontSize: '36px', fill: '#fff', backgroundColor: '#28a745',
+      padding: { x: 20, y: 10 }, stroke: '#155724', strokeThickness: 4
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    backText.on('pointerdown', () => this.scene.start('MainMenuScene'));
+    backText.on('pointerover', () => backText.setStyle({ backgroundColor: '#218838' }));
+    backText.on('pointerout', () => backText.setStyle({ backgroundColor: '#28a745' }));
+  }
+}
+
 const config = {
   type: Phaser.AUTO,
   width: 400,
   height: 600,
-  parent: 'game-container',
   physics: {
     default: 'arcade',
-    arcade: {
-      gravity: { y: 1000 },
-      debug: false
-    }
+    arcade: { debug: false }
   },
-  scene: [MainMenuScene, GameScene, CustomizationScene]
+  scene: [MainMenuScene, GameScene, CustomizationScene, LeaderboardScene]
 };
 
-new Phaser.Game(config);
+let game = new Phaser.Game(config);
+
+let bird;
+let pipes;
+let pipeTimer;
+let score = 0;
+let scoreText;
+let gameOver = false;
