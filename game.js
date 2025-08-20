@@ -94,11 +94,13 @@ class GameScene extends Phaser.Scene {
     pipeTimer = this.time.addEvent({ delay: 1500, callback: this.addPipes, callbackScope: this, loop: true });
 
     this.input.keyboard.on('keydown-W', this.flap, this);
+    this.input.keyboard.on('keydown-SPACE', this.flap, this);
+    this.input.keyboard.on('keydown-UP', this.flap, this);
     this.input.on('pointerdown', this.flap, this);
 
     this.physics.add.overlap(bird, pipes, this.hitPipe, null, this);
 
-    this.input.keyboard.on('keydown-D', () => {
+    this.input.keyboard.on('keydown-P', () => {
       const dbg = this.physics.world.drawDebug;
       this.physics.world.drawDebug = !dbg;
       this.physics.world.debugGraphic.clear();
