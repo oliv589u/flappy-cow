@@ -2,7 +2,6 @@
 
 // Simple per-skin hitbox configs
 const HITBOXES = {
-  bird:      { w: 28, h: 20, ox: 6,  oy: 7 },
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
   birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 }
 };
@@ -69,7 +68,7 @@ class GameScene extends Phaser.Scene {
     g.generateTexture('pipe', 60, 400);
     g.destroy();
 
-    const selectedSkin = this.registry.get('birdSkin') || 'bird';
+    const selectedSkin = this.registry.get('birdSkin') || 'birdblue';
     bird = this.physics.add.sprite(50, 300, selectedSkin);
     bird.setOrigin(0, 0);
 
