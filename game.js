@@ -10,6 +10,11 @@ class MainMenuScene extends Phaser.Scene {
   constructor() { super('MainMenuScene'); }
 
   create() {
+    // ✅ Set default skin if not selected
+    if (!this.registry.get('birdSkin')) {
+      this.registry.set('birdSkin', 'birdBlue');
+    }
+
     const cx = this.cameras.main.width / 2;
 
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
@@ -68,7 +73,8 @@ class GameScene extends Phaser.Scene {
     g.generateTexture('pipe', 60, 400);
     g.destroy();
 
-    const selectedSkin = this.registry.get('birdSkin') || 'bird';
+    // ✅ Use a safe default skin
+    const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     bird = this.physics.add.sprite(50, 300, selectedSkin);
     bird.setOrigin(0, 0);
 
@@ -190,6 +196,11 @@ class CustomizationScene extends Phaser.Scene {
   }
 
   create() {
+    // ✅ Default skin fallback
+    if (!this.registry.get('birdSkin')) {
+      this.registry.set('birdSkin', 'birdBlue');
+    }
+
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
     this.add.text(200, 50, 'Choose Your Bird', {
       fontSize: '32px', fill: '#000'
