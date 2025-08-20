@@ -42,7 +42,6 @@ class GameScene extends Phaser.Scene {
   constructor() { super('GameScene'); }
 
   preload() {
-    this.load.image('bird', 'bird.png');
     this.load.image('birdRed', 'bird_red.png');
     this.load.image('birdBlue', 'bird_blue.png');
     this.load.image('bgSky', 'background_sky.png');
@@ -187,7 +186,6 @@ class CustomizationScene extends Phaser.Scene {
   constructor() { super('CustomizationScene'); }
 
   preload() {
-    this.load.image('bird', 'bird.png');
     this.load.image('birdRed', 'bird_red.png');
     this.load.image('birdBlue', 'bird_blue.png');
   }
