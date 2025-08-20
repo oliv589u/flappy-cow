@@ -1,8 +1,8 @@
-/* global Phaser */  // Tell linters Phaser is global
+/* global Phaser */
 
 // Simple per-skin hitbox configs
 const HITBOXES = {
-  bird:      { w: 28, h: 20, ox: 6,  oy: 7 },   // tune these to your sprite
+  bird:      { w: 28, h: 20, ox: 6,  oy: 7 },
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
   birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 }
 };
@@ -15,12 +15,16 @@ class MainMenuScene extends Phaser.Scene {
 
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
 
-    const titleStyle = { fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6,
-      shadow: { offsetX: 3, offsetY: 3, color: '#333', blur: 5, stroke: true, fill: true } };
+    const titleStyle = {
+      fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6,
+      shadow: { offsetX: 3, offsetY: 3, color: '#333', blur: 5, stroke: true, fill: true }
+    };
     this.add.text(cx, 100, 'Flappy Game', titleStyle).setOrigin(0.5);
 
-    const btnStyle = { fontSize: '36px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 25, y: 12 },
-      stroke: '#155724', strokeThickness: 4 };
+    const btnStyle = {
+      fontSize: '36px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 25, y: 12 },
+      stroke: '#155724', strokeThickness: 4
+    };
 
     const playText = this.add.text(cx, 250, '▶ Play', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
     playText.on('pointerover', () => playText.setStyle({ backgroundColor: '#218838' }));
@@ -60,7 +64,6 @@ class GameScene extends Phaser.Scene {
     this.bgSky2.setScale(scale);
     this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
 
-    // Pipe texture
     const g = this.add.graphics();
     g.fillStyle(0x008000, 1);
     g.fillRect(0, 0, 60, 400);
@@ -71,10 +74,9 @@ class GameScene extends Phaser.Scene {
     bird = this.physics.add.sprite(50, 300, selectedSkin);
     bird.setOrigin(0, 0);
 
-    // Tight hitbox using setSize and setOffset
     const hb = HITBOXES[selectedSkin] || { w: bird.width, h: bird.height, ox: 0, oy: 0 };
-    bird.body.setSize(hb.w, hb.h);      // width and height of hitbox in pixels
-    bird.body.setOffset(hb.ox, hb.oy);  // offset inside sprite, from top-left
+    bird.body.setSize(hb.w, hb.h);
+    bird.body.setOffset(hb.ox, hb.oy);
 
     bird.setCollideWorldBounds(true);
 
@@ -92,7 +94,6 @@ class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(bird, pipes, this.hitPipe, null, this);
 
-    // Optional toggle to visualize bodies
     this.input.keyboard.on('keydown-D', () => {
       const dbg = this.physics.world.drawDebug;
       this.physics.world.drawDebug = !dbg;
@@ -122,7 +123,9 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  flap() { if (!gameOver) bird.setVelocityY(-400); }
+  flap() {
+    if (!gameOver) bird.setVelocityY(-400);
+  }
 
   addPipes() {
     const gap = 150;
@@ -147,7 +150,9 @@ class GameScene extends Phaser.Scene {
     bottomPipe.scored = false;
   }
 
-  hitPipe() { if (!gameOver) this.endGame(); }
+  hitPipe() {
+    if (!gameOver) this.endGame();
+  }
 
   endGame() {
     gameOver = true;
@@ -161,8 +166,10 @@ class GameScene extends Phaser.Scene {
       fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6, align: 'center'
     }).setOrigin(0.5).setDepth(100);
 
-    const btnStyle = { fontSize: '32px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 20, y: 10 },
-      stroke: '#155724', strokeThickness: 4 };
+    const btnStyle = {
+      fontSize: '32px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 20, y: 10 },
+      stroke: '#155724', strokeThickness: 4
+    };
 
     const continueBtn = this.add.text(200, 350, 'Continue', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
     continueBtn.on('pointerover', () => continueBtn.setStyle({ backgroundColor: '#218838' }));
@@ -178,15 +185,62 @@ class GameScene extends Phaser.Scene {
 
 class CustomizationScene extends Phaser.Scene {
   constructor() { super('CustomizationScene'); }
+
+  preload() {
+    this.load.image('bird', 'bird.png');
+    this.load.image('birdRed', 'bird_red.png');
+    this.load.image('birdBlue', 'bird_blue.png');
+  }
+
   create() {
     this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
-    this.add.text(200, 100, 'Customization Placeholder', { fontSize: '28px', fill: '#000' }).setOrigin(0.5);
-    this.add.text(200, 500, 'Click anywhere to return', { fontSize: '20px', fill: '#000' }).setOrigin(0.5);
-    this.input.once('pointerdown', () => this.scene.start('MainMenuScene'));
+    this.add.text(200, 50, 'Choose Your Bird', {
+      fontSize: '32px', fill: '#000'
+    }).setOrigin(0.5);
+
+    const skins = ['bird', 'birdRed', 'birdBlue'];
+    const selectedSkin = this.registry.get('birdSkin') || 'bird';
+    const spacing = 120;
+
+    skins.forEach((skin, index) => {
+      const x = 80 + index * spacing;
+      const sprite = this.add.image(x, 200, skin).setScale(2).setInteractive({ useHandCursor: true });
+
+      if (skin === selectedSkin) {
+        sprite.selectedBorder = this.add.rectangle(x, 200, sprite.width * 2 + 10, sprite.height * 2 + 10)
+          .setStrokeStyle(4, 0xffff00)
+          .setOrigin(0.5);
+      }
+
+      sprite.on('pointerdown', () => {
+        this.children.list.forEach(child => {
+          if (child.selectedBorder) child.selectedBorder.destroy();
+        });
+
+        sprite.selectedBorder = this.add.rectangle(x, 200, sprite.width * 2 + 10, sprite.height * 2 + 10)
+          .setStrokeStyle(4, 0xffff00)
+          .setOrigin(0.5);
+
+        this.registry.set('birdSkin', skin);
+      });
+    });
+
+    const backBtn = this.add.text(200, 500, '← Back to Menu', {
+      fontSize: '24px',
+      fill: '#fff',
+      backgroundColor: '#007bff',
+      padding: { x: 20, y: 10 },
+      stroke: '#0056b3',
+      strokeThickness: 3
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    backBtn.on('pointerover', () => backBtn.setStyle({ backgroundColor: '#0056b3' }));
+    backBtn.on('pointerout', () => backBtn.setStyle({ backgroundColor: '#007bff' }));
+    backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
 
-// Globals and Phaser config
+// Globals
 let gameOver = false;
 let score = 0;
 let bird;
@@ -194,12 +248,19 @@ let pipes;
 let scoreText;
 let pipeTimer;
 
+// Game Config
 const config = {
   type: Phaser.AUTO,
   width: 400,
   height: 600,
   parent: 'game-container',
-  physics: { default: 'arcade', arcade: { gravity: { y: 1000 }, debug: false } },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 1000 },
+      debug: false
+    }
+  },
   scene: [MainMenuScene, GameScene, CustomizationScene]
 };
 
