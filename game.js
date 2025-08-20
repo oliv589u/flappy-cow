@@ -23,7 +23,7 @@ class MainMenuScene extends Phaser.Scene {
       fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6,
       shadow: { offsetX: 3, offsetY: 3, color: '#333', blur: 5, stroke: true, fill: true }
     };
-    this.add.text(cx, 100, 'Flappy Game', titleStyle).setOrigin(0.5);
+    this.add.text(cx, 100, 'Flappy Cow', titleStyle).setOrigin(0.5);
 
     const btnStyle = {
       fontSize: '36px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 25, y: 12 },
