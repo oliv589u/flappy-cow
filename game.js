@@ -21,6 +21,12 @@ class MainMenuScene extends Phaser.Scene {
       fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5);
 
+    // Display High Score
+    const highScore = parseInt(localStorage.getItem('flappyHighScore') || '0', 10);
+    this.add.text(cx, 170, `High Score: ${highScore}`, {
+      fontSize: '32px', fill: '#fff', stroke: '#000', strokeThickness: 4
+    }).setOrigin(0.5);
+
     const btnStyle = {
       fontSize: '36px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 25, y: 12 },
       stroke: '#155724', strokeThickness: 4
@@ -32,8 +38,7 @@ class MainMenuScene extends Phaser.Scene {
     const customizeBtn = this.add.text(cx, 320, '🎨 Customize', btnStyle).setOrigin(0.5).setInteractive();
     customizeBtn.on('pointerdown', () => this.scene.start('CustomizationScene'));
 
-    const leaderboardBtn = this.add.text(cx, 390, '🏆 Leaderboard', btnStyle).setOrigin(0.5).setInteractive();
-    leaderboardBtn.on('pointerdown', () => this.scene.start('LeaderboardScene'));
+    // Removed leaderboard button since it's no longer needed
   }
 }
 
@@ -144,12 +149,12 @@ class GameScene extends Phaser.Scene {
     pipeTimer.remove();
 
     const overlay = this.add.rectangle(0, 0, 400, 600, 0x000000, 0.5).setOrigin(0, 0).setDepth(99);
-    const gameOverText = this.add.text(200, 150, `Game Over!\nScore: ${score}`, {
+    this.add.text(200, 150, `Game Over!\nScore: ${score}`, {
       fontSize: '40px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5).setDepth(100);
 
-    const name = prompt('Enter your name for the leaderboard:') || 'Anonymous';
-    saveScore(name, score); // ✅ Save to localStorage
+    // Save high score if it's higher
+    saveHighScore(score);
 
     const retryBtn = this.add.text(200, 300, 'Retry', {
       fontSize: '28px', fill: '#fff', backgroundColor: '#28a745',
@@ -162,34 +167,6 @@ class GameScene extends Phaser.Scene {
       padding: { x: 20, y: 10 }, stroke: '#0056b3', strokeThickness: 3
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
     menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
-  }
-}
-
-// ===== Leaderboard Scene =====
-class LeaderboardScene extends Phaser.Scene {
-  constructor() { super('LeaderboardScene'); }
-
-  create() {
-    const cx = this.cameras.main.width / 2;
-
-    this.add.rectangle(0, 0, 400, 600, 0x333333).setOrigin(0, 0);
-
-    this.add.text(cx, 60, '🏆 Leaderboard', {
-      fontSize: '48px', fill: '#fff', stroke: '#000', strokeThickness: 6
-    }).setOrigin(0.5);
-
-    const scores = JSON.parse(localStorage.getItem('flappyScores') || '[]');
-    scores.forEach((entry, i) => {
-      this.add.text(cx, 130 + i * 40, `${i + 1}. ${entry.name} - ${entry.score}`, {
-        fontSize: '28px', fill: '#fff'
-      }).setOrigin(0.5);
-    });
-
-    const backBtn = this.add.text(cx, 540, '← Back', {
-      fontSize: '28px', fill: '#fff', backgroundColor: '#007bff',
-      padding: { x: 20, y: 10 }, stroke: '#0056b3', strokeThickness: 3
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
 
@@ -243,12 +220,12 @@ class CustomizationScene extends Phaser.Scene {
   }
 }
 
-// ===== Leaderboard Logic =====
-function saveScore(name, score) {
-  const existing = JSON.parse(localStorage.getItem('flappyScores') || '[]');
-  existing.push({ name, score });
-  existing.sort((a, b) => b.score - a.score);
-  localStorage.setItem('flappyScores', JSON.stringify(existing.slice(0, 10)));
+// ===== High Score Logic =====
+function saveHighScore(score) {
+  const highScore = parseInt(localStorage.getItem('flappyHighScore') || '0', 10);
+  if (score > highScore) {
+    localStorage.setItem('flappyHighScore', score);
+  }
 }
 
 // ===== Game Setup =====
@@ -268,7 +245,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 1000 }, debug: false }
   },
-  scene: [MainMenuScene, GameScene, CustomizationScene, LeaderboardScene]
+  scene: [MainMenuScene, GameScene, CustomizationScene]
 };
 
 new Phaser.Game(config);
