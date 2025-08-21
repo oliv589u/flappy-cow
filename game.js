@@ -92,9 +92,10 @@ class GameScene extends Phaser.Scene {
 
     pipes = this.physics.add.group();
 
-    scoreText = this.add.text(10, 10, 'Score: 0', {
+    Text = this.add.text(10, 10, 'Score: 0', {
       fontSize: '40px', fontWeight: 'bold', fill: '#ff0', stroke: '#000', strokeThickness: 6
-    });
+    });Text.setDepth(10);
+
 
     pipeTimer = this.time.addEvent({ delay: 1500, callback: this.addPipes, callbackScope: this, loop: true });
 
@@ -112,7 +113,7 @@ class GameScene extends Phaser.Scene {
     const scrollSpeed = 1;
     this.bgSky1.x -= scrollSpeed;
     this.bgSky2.x -= scrollSpeed;
-
+score
     if (this.bgSky1.x <= -this.bgSky1.displayWidth) this.bgSky1.x = this.bgSky2.x + this.bgSky2.displayWidth;
     if (this.bgSky2.x <= -this.bgSky2.displayWidth) this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
 
