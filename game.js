@@ -106,12 +106,7 @@ class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(bird, pipes, this.hitPipe, null, this);
 
-    // Rainbow trail group
-    this.trailParticles = this.add.group();
-
-    // Colors for the rainbow trail
-    this.rainbowColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x8B00FF];
-    this.trailTimer = 0;
+    // Removed trailParticles, rainbowColors, trailTimer
   }
 
   update(time, delta) {
@@ -135,7 +130,7 @@ class GameScene extends Phaser.Scene {
       if (pipe.x < -pipe.displayWidth) pipe.destroy();
     });
 
-    this.updateTrail(delta);
+    // Removed updateTrail(delta);
   }
 
   flap() {
@@ -191,33 +186,6 @@ class GameScene extends Phaser.Scene {
 
     retryBtn.on('pointerdown', () => this.scene.restart());
     menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
-  }
-
-  updateTrail(delta) {
-    if (this.registry.get('birdSkin') !== 'birdBlue') return;
-
-    this.trailTimer += delta;
-
-    // Add a new trail dot every 50 ms
-    if (this.trailTimer > 50) {
-      this.trailTimer = 0;
-
-      const color = Phaser.Utils.Array.GetRandom(this.rainbowColors);
-
-      const dot = this.add.circle(bird.x + bird.width / 2, bird.y + bird.height / 2, 5, color);
-      dot.alpha = 0.7;
-      this.trailParticles.add(dot);
-
-      // Fade out and destroy the dot after 400ms
-      this.tweens.add({
-        targets: dot,
-        alpha: 0,
-        scale: 0,
-        duration: 400,
-        ease: 'Power1',
-        onComplete: () => dot.destroy()
-      });
-    }
   }
 }
 
