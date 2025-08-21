@@ -122,7 +122,7 @@ score
     pipes.getChildren().forEach(pipe => {
       if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x && pipe.y === 0) {
         score++;
-        scoreText.setText('Score: ' + score);
+        Text.setText('Score: ' + score);
         pipe.scored = true;
       }
       if (pipe.x < -pipe.displayWidth) pipe.destroy();
