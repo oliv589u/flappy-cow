@@ -94,8 +94,8 @@ class GameScene extends Phaser.Scene {
 
     Text = this.add.text(10, 10, 'Score: 0', {
       fontSize: '40px', fontWeight: 'bold', fill: '#ff0', stroke: '#000', strokeThickness: 6
-    });Text.setDepth(10);
-
+    });
+    Text.setDepth(10);
 
     pipeTimer = this.time.addEvent({ delay: 1500, callback: this.addPipes, callbackScope: this, loop: true });
 
@@ -105,15 +105,22 @@ class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', this.flap, this);
 
     this.physics.add.overlap(bird, pipes, this.hitPipe, null, this);
+
+    // Rainbow trail group
+    this.trailParticles = this.add.group();
+
+    // Colors for the rainbow trail
+    this.rainbowColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x8B00FF];
+    this.trailTimer = 0;
   }
 
-  update() {
+  update(time, delta) {
     if (gameOver) return;
 
     const scrollSpeed = 1;
     this.bgSky1.x -= scrollSpeed;
     this.bgSky2.x -= scrollSpeed;
-score
+
     if (this.bgSky1.x <= -this.bgSky1.displayWidth) this.bgSky1.x = this.bgSky2.x + this.bgSky2.displayWidth;
     if (this.bgSky2.x <= -this.bgSky2.displayWidth) this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
 
@@ -127,6 +134,8 @@ score
       }
       if (pipe.x < -pipe.displayWidth) pipe.destroy();
     });
+
+    this.updateTrail(delta);
   }
 
   flap() {
@@ -182,6 +191,33 @@ score
 
     retryBtn.on('pointerdown', () => this.scene.restart());
     menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+  }
+
+  updateTrail(delta) {
+    if (this.registry.get('birdSkin') !== 'birdBlue') return;
+
+    this.trailTimer += delta;
+
+    // Add a new trail dot every 50 ms
+    if (this.trailTimer > 50) {
+      this.trailTimer = 0;
+
+      const color = Phaser.Utils.Array.GetRandom(this.rainbowColors);
+
+      const dot = this.add.circle(bird.x + bird.width / 2, bird.y + bird.height / 2, 5, color);
+      dot.alpha = 0.7;
+      this.trailParticles.add(dot);
+
+      // Fade out and destroy the dot after 400ms
+      this.tweens.add({
+        targets: dot,
+        alpha: 0,
+        scale: 0,
+        duration: 400,
+        ease: 'Power1',
+        onComplete: () => dot.destroy()
+      });
+    }
   }
 }
 
@@ -253,7 +289,7 @@ let gameOver = false;
 let score = 0;
 let bird;
 let pipes;
-let scoreText;
+let Text;
 let pipeTimer;
 
 const config = {
