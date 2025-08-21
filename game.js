@@ -187,7 +187,7 @@ class CustomizationScene extends Phaser.Scene {
       fontSize: '32px', fill: '#000'
     }).setOrigin(0.5);
 
-    const skins = ['birdRed', 'birdBlue', 'birdGreen'];  // Added birdGreen
+    const skins = ['birdRed', 'birdBlue',];
     const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     const spacing = 120;
 
