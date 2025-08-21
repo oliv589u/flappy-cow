@@ -21,24 +21,31 @@ class MainMenuScene extends Phaser.Scene {
       fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5);
 
-    // Display High Score
     const highScore = parseInt(localStorage.getItem('flappyHighScore') || '0', 10);
     this.add.text(cx, 170, `High Score: ${highScore}`, {
       fontSize: '32px', fill: '#fff', stroke: '#000', strokeThickness: 4
     }).setOrigin(0.5);
 
     const btnStyle = {
-      fontSize: '36px', fill: '#fff', backgroundColor: '#28a745', padding: { x: 25, y: 12 },
-      stroke: '#155724', strokeThickness: 4
+      fontSize: '36px',
+      fill: '#fff',
+      backgroundColor: '#28a745',
+      padding: { x: 25, y: 12 },
+      stroke: '#155724',
+      strokeThickness: 4
     };
 
-    const playBtn = this.add.text(cx, 250, '▶ Play', btnStyle).setOrigin(0.5).setInteractive();
+    const playBtn = this.add.text(cx, 250, '▶ Play', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const customizeBtn = this.add.text(cx, 320, '🎨 Customize', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    // Hover effect
+    [playBtn, customizeBtn].forEach(btn => {
+      btn.on('pointerover', () => btn.setStyle({ stroke: '#00f' }));
+      btn.on('pointerout', () => btn.setStyle({ stroke: '#155724' }));
+    });
+
     playBtn.on('pointerdown', () => this.scene.start('GameScene'));
-
-    const customizeBtn = this.add.text(cx, 320, '🎨 Customize', btnStyle).setOrigin(0.5).setInteractive();
     customizeBtn.on('pointerdown', () => this.scene.start('CustomizationScene'));
-
-    // Removed leaderboard button since it's no longer needed
   }
 }
 
@@ -148,24 +155,31 @@ class GameScene extends Phaser.Scene {
     this.physics.pause();
     pipeTimer.remove();
 
-    const overlay = this.add.rectangle(0, 0, 400, 600, 0x000000, 0.5).setOrigin(0, 0).setDepth(99);
+    this.add.rectangle(0, 0, 400, 600, 0x000000, 0.5).setOrigin(0, 0).setDepth(99);
     this.add.text(200, 150, `Game Over!\nScore: ${score}`, {
       fontSize: '40px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5).setDepth(100);
 
-    // Save high score if it's higher
     saveHighScore(score);
 
     const retryBtn = this.add.text(200, 300, 'Retry', {
       fontSize: '28px', fill: '#fff', backgroundColor: '#28a745',
       padding: { x: 20, y: 10 }, stroke: '#155724', strokeThickness: 3
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
-    retryBtn.on('pointerdown', () => this.scene.restart());
 
     const menuBtn = this.add.text(200, 370, 'Main Menu', {
       fontSize: '28px', fill: '#fff', backgroundColor: '#007bff',
       padding: { x: 20, y: 10 }, stroke: '#0056b3', strokeThickness: 3
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
+
+    // Hover effect
+    retryBtn.on('pointerover', () => retryBtn.setStyle({ stroke: '#00f' }));
+    retryBtn.on('pointerout', () => retryBtn.setStyle({ stroke: '#155724' }));
+
+    menuBtn.on('pointerover', () => menuBtn.setStyle({ stroke: '#00f' }));
+    menuBtn.on('pointerout', () => menuBtn.setStyle({ stroke: '#0056b3' }));
+
+    retryBtn.on('pointerdown', () => this.scene.restart());
     menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
@@ -187,7 +201,7 @@ class CustomizationScene extends Phaser.Scene {
       fontSize: '32px', fill: '#000'
     }).setOrigin(0.5);
 
-    const skins = ['birdRed', 'birdBlue',];
+    const skins = ['birdRed', 'birdBlue'];
     const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     const spacing = 120;
 
@@ -216,7 +230,12 @@ class CustomizationScene extends Phaser.Scene {
       fontSize: '24px', fill: '#fff', backgroundColor: '#007bff',
       padding: { x: 20, y: 10 }, stroke: '#0056b3', strokeThickness: 3
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
     backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+
+    // Hover effect
+    backBtn.on('pointerover', () => backBtn.setStyle({ stroke: '#00f' }));
+    backBtn.on('pointerout', () => backBtn.setStyle({ stroke: '#0056b3' }));
   }
 }
 
