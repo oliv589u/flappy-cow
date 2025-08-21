@@ -3,7 +3,8 @@
 // Simple per-skin hitbox configs
 const HITBOXES = {
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
-  birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 }
+  birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 },
+  birdGreen: { w: 28, h: 20, ox: 6,  oy: 7 }  // New birdGreen hitbox
 };
 
 // ===== Main Menu Scene =====
@@ -49,6 +50,7 @@ class GameScene extends Phaser.Scene {
   preload() {
     this.load.image('birdRed', 'bird_red.png');
     this.load.image('birdBlue', 'bird_blue.png');
+    this.load.image('birdGreen', 'bird_green.png'); // Load new birdGreen asset
     this.load.image('bgSky', 'background_sky.png');
   }
 
@@ -177,6 +179,7 @@ class CustomizationScene extends Phaser.Scene {
   preload() {
     this.load.image('birdRed', 'bird_red.png');
     this.load.image('birdBlue', 'bird_blue.png');
+    this.load.image('birdGreen', 'bird_green.png'); // Load new birdGreen asset
   }
 
   create() {
@@ -187,7 +190,7 @@ class CustomizationScene extends Phaser.Scene {
       fontSize: '32px', fill: '#000'
     }).setOrigin(0.5);
 
-    const skins = ['birdRed', 'birdBlue'];
+    const skins = ['birdRed', 'birdBlue', 'birdGreen'];  // Added birdGreen
     const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
     const spacing = 120;
 
