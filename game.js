@@ -1,24 +1,42 @@
 /* global Phaser */
 
-// Simple per-skin hitbox configs
 const HITBOXES = {
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
   birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 },
+  birdGreen: { w: 28, h: 20, ox: 6,  oy: 7 }, // NEW BIRD
 };
+
+// ===== Preload Scene =====
+class PreloadScene extends Phaser.Scene {
+  constructor() {
+    super('PreloadScene');
+  }
+
+  preload() {
+    this.load.image('birdRed', 'bird_red.png');
+    this.load.image('birdBlue', 'bird_blue.png');
+    this.load.image('birdGreen', 'bird_green.png'); // NEW BIRD
+    this.load.image('bgSky', 'background_sky.png');
+  }
+
+  create() {
+    const savedSkin = localStorage.getItem('birdSkin');
+    this.registry.set('birdSkin', savedSkin || 'birdBlue');
+    this.scene.start('MainMenuScene');
+  }
+}
 
 // ===== Main Menu Scene =====
 class MainMenuScene extends Phaser.Scene {
   constructor() { super('MainMenuScene'); }
 
   create() {
-    if (!this.registry.get('birdSkin')) this.registry.set('birdSkin', 'birdBlue');
-
     const cx = this.cameras.main.width / 2;
 
-    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
+    this.add.rectangle(0, 0, 400, 600, 0x87ceeb).setOrigin(0, 0);
 
     this.add.text(cx, 100, 'Flappy Cow', {
-      fontSize: '48px', fontWeight: 'bold', fill: '#fff', stroke: '#000', strokeThickness: 6
+      fontSize: '48px', fill: '#fff', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5);
 
     const highScore = parseInt(localStorage.getItem('flappyHighScore') || '0', 10);
@@ -38,7 +56,6 @@ class MainMenuScene extends Phaser.Scene {
     const playBtn = this.add.text(cx, 250, '▶ Play', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
     const customizeBtn = this.add.text(cx, 320, '🎨 Customize', btnStyle).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    // Hover effect
     [playBtn, customizeBtn].forEach(btn => {
       btn.on('pointerover', () => btn.setStyle({ stroke: '#00f' }));
       btn.on('pointerout', () => btn.setStyle({ stroke: '#155724' }));
@@ -53,17 +70,11 @@ class MainMenuScene extends Phaser.Scene {
 class GameScene extends Phaser.Scene {
   constructor() { super('GameScene'); }
 
-  preload() {
-    this.load.image('birdRed', 'bird_red.png');
-    this.load.image('birdBlue', 'bird_blue.png');
-    this.load.image('bgSky', 'background_sky.png');
-  }
-
   create() {
-    gameOver = false;
-    score = 0;
+    this.gameOver = false;
+    this.score = 0;
 
-    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x87ceeb).setOrigin(0, 0);
+    this.add.rectangle(0, 0, 400, 600, 0x87ceeb).setOrigin(0, 0);
 
     this.bgSky1 = this.add.image(0, 0, 'bgSky').setOrigin(0, 0);
     this.bgSky2 = this.add.image(this.bgSky1.width, 0, 'bgSky').setOrigin(0, 0);
@@ -82,35 +93,30 @@ class GameScene extends Phaser.Scene {
     g.destroy();
 
     const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
-    bird = this.physics.add.sprite(50, 300, selectedSkin);
-    bird.setOrigin(0, 0);
+    this.bird = this.physics.add.sprite(50, 300, selectedSkin).setOrigin(0, 0);
+    const hb = HITBOXES[selectedSkin] || { w: this.bird.width, h: this.bird.height, ox: 0, oy: 0 };
+    this.bird.body.setSize(hb.w, hb.h);
+    this.bird.body.setOffset(hb.ox, hb.oy);
+    this.bird.setCollideWorldBounds(true);
 
-    const hb = HITBOXES[selectedSkin] || { w: bird.width, h: bird.height, ox: 0, oy: 0 };
-    bird.body.setSize(hb.w, hb.h);
-    bird.body.setOffset(hb.ox, hb.oy);
-    bird.setCollideWorldBounds(true);
+    this.pipes = this.physics.add.group();
 
-    pipes = this.physics.add.group();
+    this.scoreText = this.add.text(10, 10, 'Score: 0', {
+      fontSize: '40px', fill: '#ff0', stroke: '#000', strokeThickness: 6
+    }).setDepth(10);
 
-    Text = this.add.text(10, 10, 'Score: 0', {
-      fontSize: '40px', fontWeight: 'bold', fill: '#ff0', stroke: '#000', strokeThickness: 6
-    });
-    Text.setDepth(10);
-
-    pipeTimer = this.time.addEvent({ delay: 1500, callback: this.addPipes, callbackScope: this, loop: true });
+    this.pipeTimer = this.time.addEvent({ delay: 1500, callback: this.addPipes, callbackScope: this, loop: true });
 
     this.input.keyboard.on('keydown-W', this.flap, this);
     this.input.keyboard.on('keydown-SPACE', this.flap, this);
     this.input.keyboard.on('keydown-UP', this.flap, this);
     this.input.on('pointerdown', this.flap, this);
 
-    this.physics.add.overlap(bird, pipes, this.hitPipe, null, this);
-
-    // Removed trailParticles, rainbowColors, trailTimer
+    this.physics.add.overlap(this.bird, this.pipes, this.hitPipe, null, this);
   }
 
-  update(time, delta) {
-    if (gameOver) return;
+  update() {
+    if (this.gameOver) return;
 
     const scrollSpeed = 1;
     this.bgSky1.x -= scrollSpeed;
@@ -119,53 +125,51 @@ class GameScene extends Phaser.Scene {
     if (this.bgSky1.x <= -this.bgSky1.displayWidth) this.bgSky1.x = this.bgSky2.x + this.bgSky2.displayWidth;
     if (this.bgSky2.x <= -this.bgSky2.displayWidth) this.bgSky2.x = this.bgSky1.x + this.bgSky1.displayWidth;
 
-    if (bird.y > 600) this.endGame();
+    if (this.bird.y > 600) this.endGame();
 
-    pipes.getChildren().forEach(pipe => {
-      if (!pipe.scored && pipe.x + pipe.displayWidth < bird.x && pipe.y === 0) {
-        score++;
-        Text.setText('Score: ' + score);
+    this.pipes.getChildren().forEach(pipe => {
+      if (!pipe.scored && pipe.x + pipe.displayWidth < this.bird.x && pipe.y === 0) {
+        this.score++;
+        this.scoreText.setText('Score: ' + this.score);
         pipe.scored = true;
       }
       if (pipe.x < -pipe.displayWidth) pipe.destroy();
     });
-
-    // Removed updateTrail(delta);
   }
 
   flap() {
-    if (!gameOver) bird.setVelocityY(-400);
+    if (!this.gameOver) this.bird.setVelocityY(-400);
   }
 
   addPipes() {
     const gap = 150;
     const pipeHeight = Phaser.Math.Between(50, 400);
 
-    const topPipe = pipes.create(400, 0, 'pipe').setOrigin(0, 0).setDisplaySize(60, pipeHeight);
+    const topPipe = this.pipes.create(400, 0, 'pipe').setOrigin(0, 0).setDisplaySize(60, pipeHeight);
     topPipe.body.setAllowGravity(false).setImmovable(true).setVelocityX(-200);
     topPipe.scored = false;
 
-    const bottomPipe = pipes.create(400, pipeHeight + gap, 'pipe').setOrigin(0, 0)
+    const bottomPipe = this.pipes.create(400, pipeHeight + gap, 'pipe').setOrigin(0, 0)
       .setDisplaySize(60, 600 - (pipeHeight + gap));
     bottomPipe.body.setAllowGravity(false).setImmovable(true).setVelocityX(-200);
     bottomPipe.scored = false;
   }
 
   hitPipe() {
-    if (!gameOver) this.endGame();
+    if (!this.gameOver) this.endGame();
   }
 
   endGame() {
-    gameOver = true;
+    this.gameOver = true;
     this.physics.pause();
-    pipeTimer.remove();
+    this.pipeTimer.remove();
 
     this.add.rectangle(0, 0, 400, 600, 0x000000, 0.5).setOrigin(0, 0).setDepth(99);
-    this.add.text(200, 150, `Game Over!\nScore: ${score}`, {
+    this.add.text(200, 150, `Game Over!\nScore: ${this.score}`, {
       fontSize: '40px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 6
     }).setOrigin(0.5).setDepth(100);
 
-    saveHighScore(score);
+    saveHighScore(this.score);
 
     const retryBtn = this.add.text(200, 300, 'Retry', {
       fontSize: '28px', fill: '#fff', backgroundColor: '#28a745',
@@ -177,14 +181,12 @@ class GameScene extends Phaser.Scene {
       padding: { x: 20, y: 10 }, stroke: '#0056b3', strokeThickness: 3
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
 
-    // Hover effect
     retryBtn.on('pointerover', () => retryBtn.setStyle({ stroke: '#00f' }));
     retryBtn.on('pointerout', () => retryBtn.setStyle({ stroke: '#155724' }));
+    retryBtn.on('pointerdown', () => this.scene.restart());
 
     menuBtn.on('pointerover', () => menuBtn.setStyle({ stroke: '#00f' }));
     menuBtn.on('pointerout', () => menuBtn.setStyle({ stroke: '#0056b3' }));
-
-    retryBtn.on('pointerdown', () => this.scene.restart());
     menuBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
   }
 }
@@ -193,25 +195,17 @@ class GameScene extends Phaser.Scene {
 class CustomizationScene extends Phaser.Scene {
   constructor() { super('CustomizationScene'); }
 
-  preload() {
-    this.load.image('birdRed', 'bird_red.png');
-    this.load.image('birdBlue', 'bird_blue.png');
-  }
-
   create() {
-    if (!this.registry.get('birdSkin')) this.registry.set('birdSkin', 'birdBlue');
+    const skins = ['birdRed', 'birdBlue', 'birdGreen']; // INCLUDE GREEN BIRD
+    const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
 
     this.add.rectangle(0, 0, 400, 600, 0x87ceeb).setOrigin(0, 0);
     this.add.text(200, 50, 'Choose Your Bird', {
       fontSize: '32px', fill: '#000'
     }).setOrigin(0.5);
 
-    const skins = ['birdRed', 'birdBlue'];
-    const selectedSkin = this.registry.get('birdSkin') || 'birdBlue';
-    const spacing = 120;
-
     skins.forEach((skin, index) => {
-      const x = 80 + index * spacing;
+      const x = 80 + index * 120;
       const sprite = this.add.image(x, 200, skin).setScale(2).setInteractive();
 
       if (skin === selectedSkin) {
@@ -228,6 +222,7 @@ class CustomizationScene extends Phaser.Scene {
           .setStrokeStyle(4, 0xffff00).setOrigin(0.5);
 
         this.registry.set('birdSkin', skin);
+        localStorage.setItem('birdSkin', skin);
       });
     });
 
@@ -237,8 +232,6 @@ class CustomizationScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
-
-    // Hover effect
     backBtn.on('pointerover', () => backBtn.setStyle({ stroke: '#00f' }));
     backBtn.on('pointerout', () => backBtn.setStyle({ stroke: '#0056b3' }));
   }
@@ -252,14 +245,7 @@ function saveHighScore(score) {
   }
 }
 
-// ===== Game Setup =====
-let gameOver = false;
-let score = 0;
-let bird;
-let pipes;
-let Text;
-let pipeTimer;
-
+// ===== Game Config =====
 const config = {
   type: Phaser.AUTO,
   width: 400,
@@ -269,7 +255,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 1000 }, debug: false }
   },
-  scene: [MainMenuScene, GameScene, CustomizationScene]
+  scene: [PreloadScene, MainMenuScene, GameScene, CustomizationScene]
 };
 
 new Phaser.Game(config);
