@@ -3,7 +3,7 @@
 const HITBOXES = {
   birdRed:   { w: 28, h: 20, ox: 6,  oy: 7 },
   birdBlue:  { w: 28, h: 20, ox: 6,  oy: 7 },
-  birdGreen: { w: 28, h: 20, ox: 6,  oy: 7 }, // NEW BIRD
+  birdGreen: { w: 50, h: 40, ox: 6,  oy: 7 }, // NEW BIRD
 };
 
 // ===== Preload Scene =====
